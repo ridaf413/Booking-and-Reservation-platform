@@ -1,0 +1,10 @@
+{
+  "name": "roomly", "private": true, "version": "1.0.0", "workspaces": ["apps/*"],
+  "scripts": {
+    "dev": "concurrently -k -n api,web,worker \"npm run dev -w apps/api\" \"npm run dev -w apps/web\" \"npm run worker -w apps/api\"",
+    "build": "npm run build --workspaces", "typecheck": "npm run typecheck --workspaces",
+    "test": "npm run test --workspaces", "test:e2e": "playwright test", "seed": "npm run seed -w apps/api"
+  },
+  "devDependencies": {"@playwright/test":"^1.56.1", "concurrently":"^9.2.1", "typescript":"^5.9.3"},
+  "engines": {"node": ">=20.19"}
+}
