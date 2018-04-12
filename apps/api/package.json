@@ -1,0 +1,43 @@
+{
+  "name": "@roomly/api",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "worker": "tsx src/worker.ts",
+    "seed": "tsx src/seed.ts",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "start": "node dist/server.js",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "bullmq": "^5.61.2",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.1.0",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "luxon": "^3.7.2",
+    "mongoose": "^8.19.1",
+    "nodemailer": "^10.0.10",
+    "stripe": "^19.1.0",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/cookie-parser": "^1.4.9",
+    "@types/express": "^5.0.3",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/luxon": "^3.7.1",
+    "@types/node": "^22.18.12",
+    "@types/nodemailer": "^7.0.2",
+    "@types/supertest": "^6.0.3",
+    "mongodb-memory-server": "^10.2.3",
+    "supertest": "^7.1.4",
+    "tsx": "^4.20.6",
+    "vitest": "^4.1.11"
+  }
+}
