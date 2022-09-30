@@ -1,0 +1,72 @@
+services:
+  mongo:
+    image: mongo:7.0
+    command: [mongod, --replSet, rs0, --bind_ip_all]
+    ports: ["127.0.0.1:27017:27017"]
+    volumes: [mongo-data:/data/db]
+    healthcheck:
+      test: [CMD-SHELL, "mongosh --quiet --eval 'try { rs.status().ok } catch (e) { rs.initiate({_id:\"rs0\",members:[{_id:0,host:\"mongo:27017\"}]}).ok }' | grep 1"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+  redis:
+    image: redis:7-alpine
+    command: [redis-server, --appendonly, "yes", --maxmemory-policy, noeviction]
+    ports: ["127.0.0.1:6379:6379"]
+    volumes: [redis-data:/data]
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports: ["127.0.0.1:1025:1025", "127.0.0.1:8025:8025"]
+  seed:
+    build: .
+    command: [node, apps/api/dist/seed.js]
+    environment: &app-env
+      MONGO_URL: mongodb://mongo:27017/roomly?replicaSet=rs0
+      REDIS_URL: redis://redis:6379
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      APP_URL: http://localhost:5173
+      JWT_SECRET: ${JWT_SECRET:-local-demo-only-change-this-secret-at-least-32-chars}
+      MOCK_WEBHOOK_SECRET: ${MOCK_WEBHOOK_SECRET:-local-mock-webhook-secret-change-me}
+      PAYMENT_PROVIDER: ${PAYMENT_PROVIDER:-mock}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      HOLD_SECONDS: ${HOLD_SECONDS:-300}
+    depends_on:
+      mongo: {condition: service_healthy}
+  api:
+    build: .
+    command: [node, apps/api/dist/server.js]
+    environment: *app-env
+    ports: ["127.0.0.1:4000:4000"]
+    depends_on:
+      seed: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://localhost:4000/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  worker:
+    build: .
+    command: [node, apps/api/dist/worker.js]
+    environment: *app-env
+    depends_on:
+      seed: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+      mailpit: {condition: service_started}
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    ports: ["127.0.0.1:5173:8080"]
+    depends_on:
+      api: {condition: service_healthy}
+volumes:
+  mongo-data:
+  redis-data:
